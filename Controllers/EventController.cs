@@ -17,31 +17,35 @@ public class EventController : ControllerBase
         _context = context;
     }
 
+    [HttpGet]
     public IActionResult GetEvent(int id)
     {
         // TODO: Get an event by it's #
         return Ok();
     }
 
-    [HttpGet("Rooms")]
+    [HttpGet("Events")]
     public IActionResult GetEvents(DateOnly start, DateOnly end)
     {
         // TODO: Get all events within a date range inclusive
         return Ok();
     }
 
+    [HttpPost]
     public IActionResult NewEvent()
     {
         // TODO: Create a new event
         return Ok();
     }
 
+    [HttpPut]
     public IActionResult UpdateEvent()
     {
         // TODO: Update an existing event
         return Ok();
     }
 
+    [HttpDelete]
     public IActionResult DeleteEvent()
     {
         // TODO: Delete an event

@@ -26,7 +26,7 @@ const config = ref({
         calendar.clearSelection()
         navigateTo(`/Day?date=${args.start.toDateLocal().toLocaleDateString()}`)
     },
-    eventDeleteHandling: 'Update',
+    /* eventDeleteHandling: 'Update',
     onEventDeleted: (args) => {
         console.log('Event deleted: ' + args.e.text())
     },
@@ -50,7 +50,7 @@ const config = ref({
                 }
             }
         ]
-    }),
+    }), */
 })
 
 const monthRef = ref(null)

@@ -102,7 +102,7 @@ const loadResources = () => {
 const onClickCalendar = () => navigateTo('/')
 
 onMounted(() => {
-    loadEvents()
-    loadResources()
+    loadEvents()        // load events
+    loadResources()     // load rooms (resources)
 })
 </script>

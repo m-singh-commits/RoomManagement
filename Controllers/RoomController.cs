@@ -17,6 +17,7 @@ public class RoomController : ControllerBase
         _context = context;
     }
 
+    [HttpGet]
     public IActionResult GetRoom(int id)
     {
         // TODO: Get a room by it's #
@@ -30,18 +31,21 @@ public class RoomController : ControllerBase
         return Ok();
     }
 
+    [HttpPost]
     public IActionResult NewRoom()
     {
         // TODO: Create a new room
         return Ok();
     }
 
+    [HttpPut]
     public IActionResult UpdateRoom()
     {
         // TODO: Update an existing room
         return Ok();
     }
 
+    [HttpDelete]
     public IActionResult DeleteRoom()
     {
         // TODO: Delete a room
