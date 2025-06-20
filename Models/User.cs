@@ -6,14 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RoomManagement.Models;
 
-[Table("Rooms")]
-public class Room
+[Table("Users")]
+public class User
 {
     [Key]
     public int Id { get; set; }
     public string Name { get; set; } = "";
-    public string Code { get; set; } = "";
-    public int Capacity { get; set; }
-    public int? SupervisingUser { get; set; }
-    public string? Options { get; set; } = "";
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public string Email { get; set; } = "";
+    public int Phone { get; set; }
 }

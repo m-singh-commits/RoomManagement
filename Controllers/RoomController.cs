@@ -20,15 +20,27 @@ public class RoomController : ControllerBase
     [HttpGet]
     public IActionResult GetRoom(int id)
     {
-        // TODO: Get a room by it's #
-        return Ok();
+        try
+        {
+            var room = _context.Database.SqlQuery<Room>(@$"
+                SELECT * FROM Rooms
+                WHERE Id = {id}
+            ").Single();
+            return Ok(room);
+        }
+        catch (Exception)
+        {
+            return NotFound($"Could not find room #{id}.");
+        }
     }
 
     [HttpGet("Rooms")]
-    public IActionResult GetRooms(int id)
+    public IActionResult GetRooms()
     {
-        // TODO: Get all rooms
-        return Ok();
+            var rooms = _context.Database.SqlQuery<Room>(@$"
+                SELECT * FROM Rooms
+            ");
+        return Ok(rooms);
     }
 
     [HttpPost]

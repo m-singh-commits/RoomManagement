@@ -20,8 +20,18 @@ public class EventController : ControllerBase
     [HttpGet]
     public IActionResult GetEvent(int id)
     {
-        // TODO: Get an event by it's #
-        return Ok();
+        try
+        {
+            var calendarEvent = _context.Database.SqlQuery<Event>(@$"
+                SELECT * FROM Events
+                WHERE Id = {id}
+            ").Single();
+            return Ok(calendarEvent);
+        }
+        catch (Exception)
+        {
+            return NotFound($"Could not find event #{id}.");
+        }
     }
 
     [HttpGet("Events")]

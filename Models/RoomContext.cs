@@ -18,4 +18,6 @@ public class RoomManagementContext : DbContext
     public DbSet<Room> Rooms { get; set; }
 
     public DbSet<Event> Events { get; set; }
+    
+    public DbSet<User> Users { get; set; }
 }
