@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RoomManagement.Models;
 
-[Table("Event")]
+[Table("Events")]
 public class Event
 {
     [Key]
