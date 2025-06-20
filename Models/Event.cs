@@ -19,6 +19,7 @@ public class Event
     public DateTime EndAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public int ChairsNeeded { get; set; }
-    public int TablesNeeded { get; set; }
+    public string? Comments { get; set; } = "";
+    public int? ChairsNeeded { get; set; }
+    public int? TablesNeeded { get; set; }
 }
