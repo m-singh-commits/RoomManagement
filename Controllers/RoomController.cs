@@ -44,23 +44,52 @@ public class RoomController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult NewRoom()
+    public IActionResult NewRoom(Room room)
     {
-        // TODO: Create a new room
-        return Ok();
+            room.Id = 0;
+            _context.Add(room);
+            _context.SaveChanges();
+
+            return Ok($"Successfully inserted Room.");
     }
 
     [HttpPut]
-    public IActionResult UpdateRoom()
+    public IActionResult UpdateRoom(Room userRoom)
     {
-        // TODO: Update an existing room
-        return Ok();
+        try
+        {
+            var oldRoom = _context.Rooms.Single(e => e.Id == userRoom.Id);
+
+            oldRoom.Name = userRoom.Name;
+            oldRoom.Code = userRoom.Code;
+            oldRoom.Capacity = userRoom.Capacity;
+            oldRoom.SupervisingUser = userRoom.SupervisingUser;
+            oldRoom.Options = userRoom.Options;
+
+            _context.SaveChanges();
+
+            return Ok($"Successfully updated room.");
+        }
+        catch (Exception)
+        {
+            return NotFound($"Could not update room.");
+        } 
     }
 
     [HttpDelete]
-    public IActionResult DeleteRoom()
+    public IActionResult DeleteRoom(int id)
     {
-        // TODO: Delete a room
-        return Ok();
+        try
+        {
+            var room = _context.Database.ExecuteSql(@$"
+                DELETE FROM Rooms
+                WHERE Id = {id}
+            ");
+            return Ok($"Sucessfully deleted room #{id}.");
+        }
+        catch (Exception)
+        {
+            return NotFound($"Could not find room #{id}.");
+        }
     }
 }

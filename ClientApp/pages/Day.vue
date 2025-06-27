@@ -6,6 +6,11 @@
         <div class="mb-4">
             <Button label="Calendar" icon="ic:outline-calendar-month" @click="onClickCalendar" />
         </div>
+
+        <div class="text-2xl font-bold mb-4 text-center">
+            {{ route.query.date }}
+        </div>
+
         <DayPilotCalendar :config="config" ref="calendarRef" />
     </div>
 </template>
@@ -13,6 +18,29 @@
 <script setup lang="ts">
 import { DayPilot, DayPilotCalendar } from '@daypilot/daypilot-lite-vue'
 import { ref, onMounted } from 'vue'
+import {EventForm} from '#components'
+import * as signalR from '@microsoft/signalr'
+
+const route = useRoute()
+const event = ref()
+const isEventFormShown = ref(false)
+const eventFormRef = ref()
+const toast = useToast()
+const overlay = useOverlay()
+const modal = overlay.create(EventForm)
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl('/hub/Events', signalR.HttpTransportType.LongPolling)
+    .withAutomaticReconnect()
+    .build()
+
+connection.on('NewEvent', () => loadEvents())
+connection.on('UpdatedEvent', () => loadEvents())
+connection.on('DeletedEvent', () => loadEvents())
+
+connection 
+    .start()
+    .catch((err) => console.error("SignalR Connection Error: ", err))
 
 const config = ref({
     viewType: 'Resources',
@@ -23,38 +51,113 @@ const config = ref({
     businessEndsHour: 21,
     timeRangeSelectedHandling: 'Enabled',
     onTimeRangeSelected: async (args) => {
-        const modal = await DayPilot.Modal.prompt('Create a new event:', 'Event 1')
-        const calendar = args.control
-        calendar.clearSelection()
-        if (modal.canceled) { return }
-        calendar.events.add({
-            start: args.start,
-            end: args.end,
-            id: DayPilot.guid(),
-            text: modal.result,
-            resource: args.resource
-        })
+        event.value = {}
+        event.value.startAt = args.start
+        event.value.endAt = args.end
+        event.value.roomId = args.resource
+        modal.open({eventInfo: event.value})
+        args.control.clearSelection()        
     },
-    eventDeleteHandling: 'Update',
+    eventDeleteHandling: 'update',
     onEventDeleted: (args) => {
         console.log('Event deleted: ' + args.e.text())
+        console.log(args)
+        $fetch(`/api/v1/Event?id=${args.e.id()}`, {
+            server: false,
+            method: 'DELETE',
+            onResponse({response}) {
+                if(!response.ok)
+                {
+                    toast.add({ title: `Could not delete event ${args.e.text()}` })
+                }
+                loadEvents()
+            }
+            
+        })
     },
-    eventMoveHandling: 'Update',
+    eventMoveHandling: 'update',
     onEventMoved: (args) => {
-        console.log('Event moved: ' + args.e.text())
+        $fetch(`/api/v1/Event?id=${args.e.data.id}`, {
+            server: false,
+            onResponse({ response }) {
+                let originalEvent = response._data
+                originalEvent.startAt = args.newStart
+                originalEvent.endAt = args.newEnd
+                originalEvent.roomId = args.newResource
+                $fetch('/api/v1/Event', {
+                    server: false,
+                    method: 'PUT',
+                    body: originalEvent,
+                    onResponse({ response }) {
+                        if (!response.ok) {
+                            toast.add({ title: `Error: ${response._data}` })
+                        } else {
+                            toast.add({ title: `Event #${originalEvent.id} was moved successfully!` })
+                        }
+
+                        loadEvents()
+                    }
+                })
+            }
+        })
     },
-    eventResizeHandling: 'Update',
+    eventResizeHandling: 'update',
     onEventResized: (args) => {
-        console.log('Event resized: ' + args.e.text())
+        $fetch(`/api/v1/Event?id=${args.e.data.id}`, {
+            server: false,
+            onResponse({ response }) {
+                let originalEvent = response._data
+                originalEvent.startAt = args.newStart
+                originalEvent.endAt = args.newEnd
+                //originalEvent.roomId = args.newResource
+                $fetch('/api/v1/Event', {
+                    server: false,
+                    method: 'PUT',
+                    body: originalEvent,
+                    onResponse({ response }) {
+                        if (!response.ok) {
+                            toast.add({ title: `Error: ${response._data}` })
+                        } else {
+                            toast.add({ title: `Event #${originalEvent.id} was moved successfully!` })
+                        }
+
+                        loadEvents()
+                    }
+                })
+            }
+        })
     },
     eventClickHandling: 'ContextMenu',
     eventRightClickHandling: 'ContextMenu',
     contextMenu: new DayPilot.Menu({
         items: [
             {
+                text: 'Edit', onClick: (args) => {
+                    let id = args.source.id()
+                    $fetch(`/api/v1/Event?id=${id}`, {
+                        server: false,
+                        onResponse({response}) {
+                            event.value = response._data
+                            modal.open({eventInfo: event.value})
+                        }
+                    })
+                }
+            },
+            {
                 text: 'Delete', onClick: (args) => {
                     const dp = args.source.calendar
                     dp.events.remove(args.source)
+                    $fetch(`/api/v1/Event?id=${args.source.id()}`, {
+                        server: false,
+                        method: 'DELETE',
+                        onResponse({response}) {
+                            if(!response.ok)
+                            {
+                                toast.add({ title: `Could not delete event ${args.source.text()}` })
+                            }
+                            loadEvents()
+                        }  
+                    })
                 }
             }
         ]
@@ -64,39 +167,37 @@ const config = ref({
 const calendarRef = ref(null)
 
 const loadEvents = () => {
-    const events = [
-        {
-            id: 1,
-            start: DayPilot.Date.today().addHours(12),
-            end: DayPilot.Date.today().addHours(14),
-            text: 'Event 1',
-            resource: 'GA'
-        },
-        {
-            id: 2,
-            start: DayPilot.Date.today().addHours(9),
-            end: DayPilot.Date.today().addHours(10),
-            text: 'Event 2',
-            resource: 'R1'
+    let events = []
+    let date = route.query.date
+    config.value.startDate = new Date(date)
+    $fetch(`api/v1/Event/Events?start=${date}&end=${date}`,{
+        server: false,
+        onResponse({response}) {
+            for (let event of response._data)
+            {
+                let eventStart = new Date(event.startAt)
+                let eventEnd = new Date(event.endAt)
+                events.push({
+                    id: event.id,
+                    start: eventStart.setHours(eventStart.getHours()-7),
+                    end: eventEnd.setHours(eventEnd.getHours()-7),
+                    text: event.name,
+                    resource: event.roomId
+                })
+            }
+            console.log(events)
+            config.value.events = events
         }
-    ]
-
-    config.value.events = events
+    })
 }
 
 const loadResources = () => {
-    const resources = [
-        { name: 'Resource 1', id: 'R1' },
-        { name: 'Resource 2', id: 'R2' },
-        { name: 'Resource 3', id: 'R3' },
-        { name: 'Resource 4', id: 'R4' },
-        { name: 'Resource 5', id: 'R5' },
-        { name: 'Resource 6', id: 'R6' },
-        { name: 'Resource 7', id: 'R7' },
-        { name: 'Resource 8', id: 'R8' }
-    ]
-
-    config.value.columns = resources
+    $fetch(`/api/v1/Room/Rooms`,{
+        server: false,
+        onResponse({response}) {
+            config.value.columns = response._data
+        }
+    })
 }
 
 const onClickCalendar = () => navigateTo('/')
