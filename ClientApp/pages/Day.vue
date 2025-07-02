@@ -42,6 +42,11 @@ connection
     .start()
     .catch((err) => console.error("SignalR Connection Error: ", err))
 
+if(localStorage.getItem('token') == undefined || localStorage.getItem('token') == null)
+{
+    navigateTo(`/Login`)
+}
+
 const config = ref({
     viewType: 'Resources',
     locale: 'en-us',
@@ -64,6 +69,9 @@ const config = ref({
         console.log(args)
         $fetch(`/api/v1/Event?id=${args.e.id()}`, {
             server: false,
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             method: 'DELETE',
             onResponse({response}) {
                 if(!response.ok)
@@ -79,6 +87,9 @@ const config = ref({
     onEventMoved: (args) => {
         $fetch(`/api/v1/Event?id=${args.e.data.id}`, {
             server: false,
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             onResponse({ response }) {
                 let originalEvent = response._data
                 originalEvent.startAt = args.newStart
@@ -86,6 +97,9 @@ const config = ref({
                 originalEvent.roomId = args.newResource
                 $fetch('/api/v1/Event', {
                     server: false,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    },
                     method: 'PUT',
                     body: originalEvent,
                     onResponse({ response }) {
@@ -105,6 +119,9 @@ const config = ref({
     onEventResized: (args) => {
         $fetch(`/api/v1/Event?id=${args.e.data.id}`, {
             server: false,
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             onResponse({ response }) {
                 let originalEvent = response._data
                 originalEvent.startAt = args.newStart
@@ -112,6 +129,9 @@ const config = ref({
                 //originalEvent.roomId = args.newResource
                 $fetch('/api/v1/Event', {
                     server: false,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    },
                     method: 'PUT',
                     body: originalEvent,
                     onResponse({ response }) {
@@ -136,6 +156,9 @@ const config = ref({
                     let id = args.source.id()
                     $fetch(`/api/v1/Event?id=${id}`, {
                         server: false,
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        },
                         onResponse({response}) {
                             event.value = response._data
                             modal.open({eventInfo: event.value})
@@ -149,6 +172,9 @@ const config = ref({
                     dp.events.remove(args.source)
                     $fetch(`/api/v1/Event?id=${args.source.id()}`, {
                         server: false,
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        },
                         method: 'DELETE',
                         onResponse({response}) {
                             if(!response.ok)
@@ -172,6 +198,9 @@ const loadEvents = () => {
     config.value.startDate = new Date(date)
     $fetch(`api/v1/Event/Events?start=${date}&end=${date}`,{
         server: false,
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
         onResponse({response}) {
             for (let event of response._data)
             {
@@ -194,6 +223,9 @@ const loadEvents = () => {
 const loadResources = () => {
     $fetch(`/api/v1/Room/Rooms`,{
         server: false,
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
         onResponse({response}) {
             config.value.columns = response._data
         }
